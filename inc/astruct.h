@@ -14,6 +14,9 @@ typedef struct oven {
     float Kp;
     float Ki;
     float Kd;
+
+    int uart_filestream;
+    int i2c_stream;
 } Oven;
 
 #endif /* ASTRUCT_H_ */

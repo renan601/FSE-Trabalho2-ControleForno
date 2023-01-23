@@ -9,76 +9,64 @@
 #include "menu.h"
 #include "uart.h"
 #include "astruct.h"
+#include "pid.h"
+#include "bme280.h"
 
 Oven ovenItem;
+struct bme280_dev dev;
 
 int main(int argc, const char * argv[]) {
+    // Opções Terminal
     define_constants(&ovenItem);
-
     int workingOption = define_working_mode();
     ovenItem.tempControl = workingOption;
     
-    pthread_t menu_id;
-    pthread_create(&menu_id, NULL, menu_control_oven, (void *)&ovenItem);
-    pthread_join(menu_id, NULL);
+    // Inicia I2C e BME280
+    ovenItem.i2c_stream = initialize_i2c(&dev);
+    uint32_t req_delay = bme280_init(&dev);
 
-    // printf("%d\n", ovenItem.tempControl);
-        
-    // printf("%f", ovenItem.Kp);
-    // printf("%f", ovenItem.Ki);
-    // printf("%f", ovenItem.Kd);
-
-    // int uart0_filestream = init_uart();
+    // Inicia UART
+    ovenItem.uart_filestream = init_uart();
     
-    // for(int i = 0; i < 10; i++ ) {
-    //     unsigned char tx_buffer[20] = {0x01, 0x23, 0xC1, 0x0, 0x4, 0x0, 0x3};
-    //     short crc_temp = calcula_CRC(tx_buffer, 7);
-    //     memcpy(&tx_buffer[7], (const void *)&crc_temp, 2);
-    //     usleep(200000);
 
-    //     if (uart0_filestream != -1)
-    //     {
-    //         printf("Escrevendo caracteres na UART ...");
-    //         int count = write(uart0_filestream, &tx_buffer[0], 9);
-    //         if (count < 0)
-    //         {
-    //             printf("UART TX error\n");
-    //         }
-    //         else
-    //         {
-    //             printf("escrito.\n");
-    //         }
-    //     }
-
-    //     usleep(200000);
-
-    //     //----- CHECK FOR ANY RX BYTES -----
-    //     if (uart0_filestream != -1)
-    //     {
-    //         // Read up to 255 characters from the port if they are there
-    //         unsigned char rx_buffer[256];
-    //         int rx_length = read(uart0_filestream, (void*)rx_buffer, 255);      //Filestream, buffer to store in, number of bytes to read (max)
-    //         if (rx_length < 0)
-    //         {
-    //             printf("Erro na leitura.\n"); //An error occured (will occur if there are no bytes)
-    //         }
-    //         else if (rx_length == 0)
-    //         {
-    //             printf("Nenhum dado disponível.\n"); //No data waiting
-    //         }
-    //         else
-    //         {
-    //             //Bytes received
-    //             //rx_buffer[rx_length] = '\0';
-    //             printf("%i Bytes lidos : %s\n", rx_length, rx_buffer);
-    //             for(int c = 0; c < rx_length - 1; c++ ) {
-    //                 printf(" %c ", rx_buffer[c]);
-    //             }
-    //         }
-    //     }
-    // }
-
+    pthread_t user_commands_id;
+    pthread_t listen_uart_id;
     
-    // close(uart0_filestream);
+    pthread_create(&user_commands_id, NULL, (void *)search_for_user_commands, (void *)&ovenItem);
+    pthread_create(&listen_uart_id, NULL, (void *)listen_uart, (void *)&ovenItem);
+
+    unsigned char data[4] = {0x01, 0, 0, 0};
+    write_uart_code16(ovenItem.uart_filestream, 0xD3, data);
+    usleep(1000000);
+    write_uart_code16(ovenItem.uart_filestream, 0xD5, data);
+    usleep(1000000);
+    data[0] = 0x00;
+    write_uart_code16(ovenItem.uart_filestream, 0xD4, data);
+    pid_atualiza_referencia(50.0);
+    write_uart_code23(ovenItem.uart_filestream, 0xC2);
+
+    double controlSignal;
+    double envTemp;
+    
+    for(int i = 0; i < 10; i++) {
+        write_uart_code23(ovenItem.uart_filestream, 0xC1);
+        envTemp = stream_sensor_data_forced_mode(&dev, req_delay);
+        usleep(1000000);
+        controlSignal = pid_controle((double) ovenItem.internalTemp);
+        printf("Sinal De Controle: %lf\n", controlSignal);
+        printf("Temperatura Ambiente: %lf\n", envTemp);
+    }
+    
+    pthread_join(user_commands_id, NULL);
+    pthread_join(listen_uart_id, NULL);
+
+
+    data[0] = 0x00;
+    write_uart_code16(ovenItem.uart_filestream, 0xD5, data);
+    usleep(1000000);
+    write_uart_code16(ovenItem.uart_filestream, 0xD3, data);
+    
+    close(ovenItem.uart_filestream);
+    printf("UART Filestream: %d", ovenItem.uart_filestream);
     return 0;
 }

@@ -4,6 +4,6 @@
 
 void define_constants(Oven *ovenItem);
 int define_working_mode();
-void menu_control_oven(void *vargp);
+//void menu_control_oven(void *vargp);
 
 #endif /* MENU_H_ */
