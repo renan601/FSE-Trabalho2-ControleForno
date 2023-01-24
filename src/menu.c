@@ -21,7 +21,7 @@ int define_working_mode() {
     while (true) {
         printf("Defina o modo de funcionamento\n");
         printf("0 - Temperatura de referência definida no dashboard\n");
-        printf("1 - Temperatura de referência definida na planilha\n");
+        printf("1 - Temperatura de referência definida na planilha (TIVE PROBLEMA PRA CONTABILIZAR O TEMPO DE EXECUÇÂO E NÂO CONSEGUI IMPLEMENTAR)\n");
         printf("2 - Temperatura de referência definida pelo terminal\n");
         scanf("%d",&option);
 

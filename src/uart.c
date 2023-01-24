@@ -180,11 +180,6 @@ void translate_codes(int rx_length, unsigned char* rx_buffer, Oven *ovenItem){
     }
 }
 
-// int check_crc(unsigned char* rx_buffer, int begin, int totalSize) {
-//     unsigned char command;
-//     memcpy(&command, &rx_buffer[begin], totalSize);
-// }
-
 void listen_uart(Oven *ovenItem) {
     printf("Uart: %d", ovenItem->uart_filestream);
     while (true) {
@@ -212,7 +207,7 @@ void listen_uart(Oven *ovenItem) {
 void search_for_user_commands(Oven *ovenItem) {
     printf("Uart: %d", ovenItem->uart_filestream);
     while (true) {
-        usleep(1000000);
+        usleep(500000);
         unsigned char tx_buffer[20] = {0x01, 0x23, 0xC3, 0x0, 0x4, 0x0, 0x3};
         short crc_code = calcula_CRC(tx_buffer, 7);
         memcpy(&tx_buffer[7], (const void *)&crc_code, 2);

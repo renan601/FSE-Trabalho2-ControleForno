@@ -125,7 +125,12 @@ int main(int argc, const char * argv[]) {
     // Opções Terminal
     define_constants(&ovenItem);
     int workingOption = define_working_mode();
-    ovenItem.tempControl = workingOption;
+    ovenItem.tempControl = 0;
+    float usertemp = 0;
+    if (workingOption == 2) {
+        printf("Insira a temperatura de referencia desejada ");
+        scanf("%f",&usertemp);
+    }
     
     // Inicia I2C e BME280
     monta_i2c(&dev, &id);
@@ -148,16 +153,13 @@ int main(int argc, const char * argv[]) {
     unsigned char turnOff[4] = {0x00, 0, 0, 0};
     write_uart_code16(ovenItem.uart_filestream, 0xD3, turnOff);
     write_uart_code16(ovenItem.uart_filestream, 0xD5, turnOff);
-
+    
+    if (usertemp != 0) {
+        send_float_uart(ovenItem.uart_filestream, 0xD2, usertemp);
+    }
+    usleep(1000000);
     write_uart_code23(ovenItem.uart_filestream, 0xC2);
     usleep(1000000);
-
-    if (workingOption == 2) {
-        float usertemp;
-        printf("Insira a temperatura de referencia desejada ");
-        scanf("%f",&usertemp);
-        send_float_uart(ovenItem.uart_filestream, 0xD2, (float) usertemp);
-    }
     
     while (true) {
         // Desligar imediatamente
@@ -191,6 +193,7 @@ int main(int argc, const char * argv[]) {
             // }
         }
         else {
+            activate_devices(0);
             usleep(1000000);
         }
         //end = clock();
