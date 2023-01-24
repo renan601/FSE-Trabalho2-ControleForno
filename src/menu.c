@@ -18,21 +18,18 @@ void define_constants(Oven *ovenItem) {
 
 int define_working_mode() {
     int option;
-    do {
+    while (true) {
         printf("Defina o modo de funcionamento\n");
-        printf("1 - Temperatura de referência definida no dashboard\n");
-        printf("2 - Temperatura de referência definida na planilha\n");
-        printf("3 - Temperatura de referência definida pelo terminal\n");
+        printf("0 - Temperatura de referência definida no dashboard\n");
+        printf("1 - Temperatura de referência definida na planilha\n");
+        printf("2 - Temperatura de referência definida pelo terminal\n");
         scanf("%d",&option);
 
         switch (option) {
-            case 1:
+            case 0:
                 return option;
                 break;
             case 2:
-                return option;
-                break;
-            case 3:
                 return option;
                 break;
             default:
@@ -40,7 +37,7 @@ int define_working_mode() {
                 break;
         }
     
-    } while (option != 3);
+    }
 
     return 0;
 }

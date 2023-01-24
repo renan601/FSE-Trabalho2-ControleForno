@@ -6,6 +6,7 @@ typedef struct oven {
     bool ovenStatus;
     bool heatingStatus;
     short int tempControl;
+    bool turnOff;
 
     float referenceTemp;
     float internalTemp;
@@ -16,7 +17,6 @@ typedef struct oven {
     float Kd;
 
     int uart_filestream;
-    int i2c_stream;
 } Oven;
 
 #endif /* ASTRUCT_H_ */
